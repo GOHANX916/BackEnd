@@ -1,38 +1,44 @@
-const express = require('express');
 const http = require('http');
+const express = require('express');
 const socketIo = require('socket.io');
 
-// Create an Express app
 const app = express();
 const server = http.createServer(app);
-
-// Set up WebSocket server using Socket.IO
 const io = socketIo(server);
 
-// Handle WebSocket connection
+// API key for authentication
+const VALID_API_KEY = 'rnd_kipMK9Pg0XiWQy25SgACKK5tO4k8';
+
+// WebSocket connection
 io.on('connection', (socket) => {
-  console.log('A user connected');
-  
-  // Listen for messages from the client
+  // Check the API key passed in the URL query
+  const apiKey = socket.handshake.query.apiKey;
+
+  if (apiKey !== VALID_API_KEY) {
+    console.log('Invalid API Key');
+    socket.disconnect(true); // Disconnect if the API key is invalid
+    return;
+  }
+
+  console.log('User connected');
+
+  // Handle the 'sendMessage' event
   socket.on('sendMessage', (message) => {
-    console.log('Message received: ', message);
-    // Emit the message to all connected clients
-    io.emit('receiveMessage', message);
+    console.log('Received message:', message);
+    io.emit('receiveMessage', message); // Broadcast the message to all connected clients
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log('A user disconnected');
+    console.log('User disconnected');
   });
 });
 
-// HTTP route for root URL
-app.get('/', (req, res) => {
-  res.send('WebSocket server is running!');
-});
+// Serve the static files (if any) from the public folder
+app.use(express.static('public'));
 
-// Start the server on a specific port
-const PORT = process.env.PORT || 10000;
+// Start the server
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
