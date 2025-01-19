@@ -2,24 +2,22 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 
-// Initialize express and HTTP server
+// Create an Express app
 const app = express();
 const server = http.createServer(app);
 
-// Initialize socket.io
+// Set up WebSocket server using Socket.IO
 const io = socketIo(server);
 
-// Serve the chat front-end (if you have static files)
-app.use(express.static('public'));
-
-// Handle incoming WebSocket connections
+// Handle WebSocket connection
 io.on('connection', (socket) => {
   console.log('A user connected');
-
-  // Handle incoming messages
+  
+  // Listen for messages from the client
   socket.on('sendMessage', (message) => {
-    console.log('Message received:', message);
-    socket.broadcast.emit('receiveMessage', message); // Broadcast to other clients
+    console.log('Message received: ', message);
+    // Emit the message to all connected clients
+    io.emit('receiveMessage', message);
   });
 
   // Handle disconnection
@@ -28,8 +26,13 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
-const PORT = process.env.PORT || 80;
+// HTTP route for root URL
+app.get('/', (req, res) => {
+  res.send('WebSocket server is running!');
+});
+
+// Start the server on a specific port
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
